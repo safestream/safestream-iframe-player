@@ -1,28 +1,27 @@
 import React, { Component } from 'react';
 import { v4 } from 'uuid';
 // import 'lib/jwplayer-7.12.2/jwplayer.js';
-import 'lib/jwplayer-7.7.4/jwplayer.js';
+import 'lib/jwplayer-7.12.2/jwplayer.js';
 
 window.jwplayer.key = 'a9ZxMOMNt+9RUE3DSKbCtbho/l7/WhGfEuWJ1vBcrsTEb/+h';
 
 class Player extends Component {
 
+  id = v4();
+  container = null;
+
+
   constructor(props){
     super(props);
-
-
   }
-
-   id = v4();
-   container = null;
 
   componentDidMount(): void {
    this.setup();
- }
-
+  }
 
  componentWillReceiveProps(nextProps: Props): void {
    if (nextProps.file !== this.props.file) {
+     console.log(nextProps.file);
      this.player.load(nextProps);
    }
  }
@@ -73,9 +72,7 @@ class Player extends Component {
      displayClick: onDisplayClick,
      meta: onMeta,
    };
-   console.log(window.jwplayer);
    this.player = window.jwplayer(this.id).setup(setupConfig);
-
    this.bindEvents(events);
  }
 
@@ -87,13 +84,11 @@ class Player extends Component {
   }
 
   render() {
-    const { file, ...props } = this.props;
-    console.log(file);
     return (
-      <div
-         id={this.id}
-         ref={(ref) => { this.container = ref; }}
-       />
+        <div
+           id={this.id}
+           ref={(ref) => { this.container = ref; }}
+         />
     );
   }
 }
