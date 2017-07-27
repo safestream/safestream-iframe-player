@@ -58,13 +58,13 @@ class Loading extends Component {
           currenticon = loader12;
           break;
       default:
-          currenticon = loader1;
+          currenticon = "none";
           break;
     }
 
     return (
       <div>
-        {show ? (
+        {show && currenticon!="none" ? (
           <div className="loading" id="loading" style={{ 'background': '#' + color}}>
           <span><img src={currenticon} style={{width: '50px'}} /> </span>
           </div>

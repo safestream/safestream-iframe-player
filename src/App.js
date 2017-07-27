@@ -22,7 +22,7 @@ class App extends Component {
     }
   }
 
-  componentWillMount(e){
+  componentWillMount(){
     if(this.validateUrlParams()){
       this.checkWatermarkStatus();
     };
@@ -31,16 +31,16 @@ class App extends Component {
   validateUrlParams(){
     let errors = false;
     const parsed = QueryString.parse(window.location.search);
-
-    if(parsed.href === undefined){
-      errors = true;
-    }
-    if(parsed.expiration === undefined){
-      errors = true;
-    }
-    if(parsed.signature === undefined){
-      errors = true;
-    }
+    //Error checking disabled due to issued with URL encoding
+    // if(parsed.href === undefined){
+    //   errors = true;
+    // }
+    // if(parsed.expiration === undefined){
+    //   errors = true;
+    // }
+    // if(parsed.signature === undefined){
+    //   errors = true;
+    // }
     if(errors){
       this.setState({
         error: true,
@@ -64,6 +64,7 @@ class App extends Component {
 
   checkWatermarkStatus(){
     const url = QueryString.parse(window.location.search).href;
+
     fetch(url)
       .then(this.checkResponse)
       .then((response) => response.json())
@@ -73,7 +74,7 @@ class App extends Component {
             return true;
         } else {
           this.setState({
-            file: responseJson.href,
+            file: responseJson.containers.m3u8,
             error: false,
             loading: false,
             goahead: true
@@ -81,7 +82,6 @@ class App extends Component {
         }
       })
       .catch((error) => {
-        console.log('We are in the catch');
         this.setState({
           error: true,
           loading: true,
@@ -92,20 +92,16 @@ class App extends Component {
       });
   }
 
-  onFullscreen = ({fullscreen}) => {
-    console.log("Full screen");
-  }
-
 
   render() {
     const parsed = QueryString.parse(window.location.search);
-    let color = /((?:[a-fA-F0-9]{6}))\b/g.test(parsed.bgcolor) && parsed.bgcolor.length === 6 ? parsed.bgcolor : 'cecece';
+    let color = /((?:[a-fA-F0-9]{6}))\b/g.test(parsed.bgcolor) && parsed.bgcolor.length === 6 ? parsed.bgcolor : 'ffffff';
     return (
       <div className="App">
           <Loading
               show={this.state.loading}
               color={color}
-              icon={parsed.icon}
+              icon={parsed.icon ? (parsed.icon) : null}
           />
           <Error
               show={this.state.error}
@@ -115,7 +111,6 @@ class App extends Component {
             <Player
                    file={this.state.file}
                    autostart
-                   onFullscreen={this.onFullscreen}
                    width={'100%'}
                    height={'100%'}
                    abouttext="SafeStream"
