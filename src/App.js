@@ -1,5 +1,7 @@
 import React, { Component } from 'react';
 import Player from './VideoPlayer';
+import Error from './Error';
+import Loading from './Loading';
 import './App.css';
 import QueryString from 'query-string';
 
@@ -8,42 +10,113 @@ class App extends Component {
   constructor(props){
     super(props);
 
+    const parsed = QueryString.parse(window.location.search);
+
     this.state = {
-      file: 'https://s2-api.shiftk8s.net/1.1/watermark/b0ec38e6-1d6c-4e91-85de-baf7a458e7b8/6c8ae40d1da2a9f74d46f587c97a203bf1feceecf90060708b76246ab235570f/1280x720/3000000/video.m3u8?expiration=1500063135946&signature=N%2B2TFekok3qJ83HpSmDzeE2nWS2GbAZ6%2FX6jgiIK%2BZg%3D',
-      file1: 'https://s2-api.shiftk8s.net/1.1/watermark/b0ec38e6-1d6c-4e91-85de-baf7a458e7b8/6c8ae40d1da2a9f74d46f587c97a203bf1feceecf90060708b76246ab235570f/1280x720/3000000/video.m3u8?expiration=1500063135946&signature=N%2B2TFekok3qJ83HpSmDzeE2nWS2GbAZ6%2FX6jgiIK%2BZg%3D',
-      file2: 'http://static.mediasilo.com.s3.amazonaws.com/safestreamvideos/short-4.mp4'
+      file: '',
+      error: false,
+      loading: true,
+      goahead: false,
+      icon: parsed.icon,
+      errormsg: ''
     }
   }
 
-  onFullscreen = ({fullscreen}) => {
-    console.log("Full screen");
+  componentWillMount(){
+    if(this.validateUrlParams()){
+      this.checkWatermarkStatus();
+    };
   }
 
-  clip1 = (e) => {
-    console.log("Clip 1");
-    this.setState({file: this.state.file1});
+  validateUrlParams(){
+    let errors = false;
+    const parsed = QueryString.parse(window.location.search);
+    //Error checking disabled due to issued with URL encoding
+    // if(parsed.href === undefined){
+    //   errors = true;
+    // }
+    // if(parsed.expiration === undefined){
+    //   errors = true;
+    // }
+    // if(parsed.signature === undefined){
+    //   errors = true;
+    // }
+    if(errors){
+      this.setState({
+        error: true,
+        errormsg: 'Invalid Video Link.'
+      });
+      return false;
+    }
+    this.setState({error: false});
+    return true;
   }
 
-  clip2 = (e) => {
-    console.log("Clip 2");
-      this.setState({file: this.state.file2});
+  checkResponse(response) {
+    if (response.status >= 200 && response.status < 300) {
+      return response
+    } else {
+      var error = new Error(response.statusText)
+      error.response = response
+      throw error
+    }
   }
 
+  checkWatermarkStatus(){
+    const url = QueryString.parse(window.location.search).href;
+
+    fetch(url)
+      .then(this.checkResponse)
+      .then((response) => response.json())
+      .then((responseJson) => {
+        if(responseJson.status !== 'READY'){
+            this.timeout = setTimeout(() => this.checkWatermarkStatus(), 5000);
+            return true;
+        } else {
+          this.setState({
+            file: responseJson.containers.m3u8,
+            error: false,
+            loading: false,
+            goahead: true
+          });
+        }
+      })
+      .catch((error) => {
+        this.setState({
+          error: true,
+          loading: true,
+          goahead: false,
+          errormsg: "Unable to play video."
+        });
+        console.error(error);
+      });
+  }
 
 
   render() {
-
+    const parsed = QueryString.parse(window.location.search);
+    let color = /((?:[a-fA-F0-9]{6}))\b/g.test(parsed.bgcolor) && parsed.bgcolor.length === 6 ? parsed.bgcolor : 'ffffff';
     return (
       <div className="App">
-        <button onClick={this.clip1}>Play 1</button>
-        <button onClick={this.clip2}>Play 2</button>
-        <Player
-            file={this.state.file}
-            autostart
-            onFullscreen={this.onFullscreen}
-            width={'100%'}
-            height={'100%'}
-        />
+          <Loading
+              show={this.state.loading}
+              color={color}
+              icon={parsed.icon ? (parsed.icon) : null}
+          />
+          <Error
+              show={this.state.error}
+              message={this.state.errormsg}
+          />
+          { this.state.goahead ? (
+            <Player
+                   file={this.state.file}
+                   autostart
+                   width={'100%'}
+                   height={'100%'}
+                   abouttext="SafeStream"
+                   aboutlink="https://www.safestream.com"
+               />
+           ) : <div></div> }
       </div>
     );
   }
