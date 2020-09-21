@@ -115,6 +115,7 @@ class App extends Component {
                    height={'100%'}
                    abouttext="SafeStream"
                    aboutlink="https://www.safestream.com"
+                   image={parsed.postFrame}
                />
            ) : <div></div> }
       </div>
